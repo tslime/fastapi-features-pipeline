@@ -1,5 +1,5 @@
 stages:
-  - dependecies
+  - dependencies
   - test_integration_units
   - E2E
 
