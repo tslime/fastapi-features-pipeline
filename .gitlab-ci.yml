@@ -16,10 +16,10 @@ test:
 E2E:
   stage: E2E
   script:
-    - PYTHONPATH=/home/taha/Desktop/Plusgrade fastapi dev src/applications/member_data.py --port 6001 &
-    - PYTHONPATH=/home/taha/Desktop/Plusgrade fastapi dev src/applications/prediction.py --port 6002 &
-    - PYTHONPATH=/home/taha/Desktop/Plusgrade fastapi dev src/applications/offer_engine.py --port 6003 &
-    - PYTHONPATH=/home/taha/Desktop/Plusgrade fastapi dev perk_app.py --port 6000 &
+    - PYTHONPATH=$(pwd) fastapi dev src/applications/member_data.py --port 6001 &
+    - PYTHONPATH=$(pwd) fastapi dev src/applications/prediction.py --port 6002 &
+    - PYTHONPATH=$(pwd) fastapi dev src/applications/offer_engine.py --port 6003 &
+    - PYTHONPATH=$(pwd) fastapi dev perk_app.py --port 6000 &
     - sleep 5
     - python3 events_streamer.py
     - pkill -f "fastapi dev"
