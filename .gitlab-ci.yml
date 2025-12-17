@@ -1,7 +1,7 @@
 stages:
-  - test
+  - test_integration_units
 
 test:
-  stage: test
+  stage: test_integration_units
   script:
     - python3 -m pytest -s
