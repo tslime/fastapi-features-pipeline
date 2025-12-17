@@ -1,6 +1,12 @@
 stages:
+  - dependecies
   - test_integration_units
   - E2E
+
+dependencies:
+  stage: dependencies
+  script:
+    - pip install -r src/requirements.txt
 
 test:
   stage: test_integration_units
