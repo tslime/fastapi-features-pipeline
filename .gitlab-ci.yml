@@ -1,7 +1,21 @@
 stages:
   - test_integration_units
+  - E2E
 
 test:
   stage: test_integration_units
   script:
     - python3 -m pytest -s
+
+E2E:
+  stage: E2E
+  script:
+    - PYTHONPATH=/home/taha/Desktop/Plusgrade fastapi dev src/applications/member_data.py --port 6001 &
+    - PYTHONPATH=/home/taha/Desktop/Plusgrade fastapi dev src/applications/prediction.py --port 6002 &
+    - PYTHONPATH=/home/taha/Desktop/Plusgrade fastapi dev src/applications/offer_engine.py --port 6003 &
+    - PYTHONPATH=/home/taha/Desktop/Plusgrade fastapi dev perk_app.py --port 6000 &
+    - sleep 5
+    - python3 events_streamer.py
+    - pkill -f "fastapi dev"
+    - sleep 2
+    - head -5 transactions.csv
