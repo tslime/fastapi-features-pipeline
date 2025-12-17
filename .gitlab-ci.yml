@@ -29,4 +29,4 @@ E2E:
     paths:
     - processed_requests.log
     - transactions.csv
-    expires: 1 week
+    expire_in: 1 week
