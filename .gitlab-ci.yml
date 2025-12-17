@@ -2,6 +2,7 @@ stages:
   - dependencies
   - test_integration_units
   - E2E
+  - Artifacts
 
 dependencies:
   stage: dependencies
@@ -25,3 +26,9 @@ E2E:
     - pkill -f "fastapi dev"
     - sleep 2
     - head -5 transactions.csv
+
+Artifacts:
+  stage: Artifacts
+  script:
+    - processed_requests.log
+    - transactions.csv
