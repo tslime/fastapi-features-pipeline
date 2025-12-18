@@ -27,6 +27,7 @@ E2E:
     - head -5 logs/transactions.csv
   artifacts:
     paths:
+    - logs/requests_sent.log
     - logs/processed_requests.log
     - logs/transactions.csv
     expire_in: 1 week
