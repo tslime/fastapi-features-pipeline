@@ -3,13 +3,15 @@ import sys
 import pytest 
 import datetime 
 
-from unittest.mock import patch, MagicMock 
-from perk_app import calculate_member_features, get_ats_resp, offer_request,calculate_offer
+from unittest.mock import patch, MagicMock, AsyncMock
+from myapp.perk_app import calculate_member_features, get_ats_resp, offer_request,calculate_offer
 from src.applications.prediction import MemberFeatures 
 from src.applications.offer_engine import OfferRequest 
 
 
-def test_caluclate_offer(): 
+
+@pytest.mark.asyncio
+async def test_caluclate_offer(): 
     logs = {}
     member_data = {
         "memberId": "member1",
@@ -19,12 +21,15 @@ def test_caluclate_offer():
         "lastTransactionUtcTs": "2025-12-17 14:00:00"
     }
 
-    with patch("requests.get") as fake_server, patch("perk_app.calculate_member_features") as fake_features, \
-     patch("perk_app.get_ats_resp") as fake_ats_resp, patch("perk_app.offer_request") as fake_offer:
-     
-     fake_server.return_value.status_code = 404
-     
-     fake_features.return_value = MemberFeatures(
+    mock_client = AsyncMock()
+    mock_client.get.return_value.status_code = 404
+
+    with patch("myapp.perk_app.c", mock_client), \
+         patch("myapp.perk_app.calculate_member_features") as fake_features, \
+         patch("myapp.perk_app.get_ats_resp", new_callable=AsyncMock) as fake_ats_resp, \
+         patch("myapp.perk_app.offer_request", new_callable=AsyncMock) as fake_offer:
+        
+        fake_features.return_value = MemberFeatures(
             AVG_POINTS_BOUGHT=200,
             AVG_REVENUE_USD=100,
             LAST_3_TRANSACTIONS_AVG_POINTS_BOUGHT=150,
@@ -35,11 +40,10 @@ def test_caluclate_offer():
             DAYS_SINCE_LAST_TRANSACTION=4 
         )
 
-     fake_ats_resp.return_value = {"ats":1,"resp":2}
-     fake_offer.return_value = {"offer":"35% bonus"}
-     
-     result = calculate_offer("member1",member_data,logs)
-
+        fake_ats_resp.return_value = {"ats":1,"resp":2}
+        fake_offer.return_value = {"offer":"35% bonus"}
+        
+        result = await calculate_offer("member1", member_data, logs)
 
     assert result["memberId"] == "member1"
     assert result["offer"] == "35% bonus"

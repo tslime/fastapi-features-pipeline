@@ -3,13 +3,14 @@ import sys
 import pytest
 import datetime
 
-from unittest.mock import patch, MagicMock
-from perk_app import calculate_member_features, get_ats_resp, offer_request
+from unittest.mock import patch, MagicMock, AsyncMock
+from myapp.perk_app import calculate_member_features, get_ats_resp, offer_request
 from src.applications.prediction import MemberFeatures
 from src.applications.offer_engine import OfferRequest
 
 
 #Features calculations tests
+
 
 def test_member_features():
     logs ={}
@@ -61,7 +62,6 @@ def test_member_features():
     assert features_result.DAYS_SINCE_LAST_TRANSACTION == projected_days
 
 
-
 def test_member_features_edge_case():
     logs ={}
 
@@ -96,7 +96,8 @@ def test_member_features_edge_case():
 
 #ats and resp feching test
 
-def test_ats_resp_fetching():
+@pytest.mark.asyncio
+async def test_ats_resp_fetching():
 
     logs = {}
     memb_features = MemberFeatures(AVG_POINTS_BOUGHT=20, 
@@ -108,39 +109,41 @@ def test_ats_resp_fetching():
                                    PCT_REDEEM_TRANSACTIONS=4, 
                                    DAYS_SINCE_LAST_TRANSACTION=5)
     
-    with patch("requests.post") as fake_server:
-        fake_server.side_effect = [
-        MagicMock(
-            json=lambda: {"prediction": 5},
-            raise_for_status=lambda: None,
-            status_code=200
-        ),
-        MagicMock(
-            json=lambda: {"prediction": 9},
-            raise_for_status=lambda: None,
-            status_code=200
-        )
-        ]
         
-        ats_resp_results = get_ats_resp(memb_features,logs)
+    mock_client = AsyncMock()
+    mock_client.post.side_effect = [
+                MagicMock(
+                    json=lambda: {"prediction": 5},
+                    raise_for_status=lambda: None,
+                    status_code=200
+                ),
+                MagicMock(
+                    json=lambda: {"prediction": 9},
+                    raise_for_status=lambda: None,
+                    status_code=200
+                )]
+        
+    with patch("myapp.perk_app.c", mock_client):
+        ats_resp_results = await get_ats_resp(memb_features,logs)
 
-        assert ats_resp_results["ats"] == 5
-        assert ats_resp_results["resp"] == 9
-        assert logs["ats"] == 5
-        assert logs["resp"] == 9
+    assert ats_resp_results["ats"] == 5
+    assert ats_resp_results["resp"] == 9
+    assert logs["ats"] == 5
+    assert logs["resp"] == 9
 
 
-
-def test_offer_request():
+@pytest.mark.asyncio
+async def test_offer_request():
     target_offer = OfferRequest(ats_prediction=10, resp_prediction=20)
 
-    with patch("requests.post") as fake_server:
-        fake_server.return_value = MagicMock(
+    mock_client = AsyncMock()
+    mock_client.post.return_value = MagicMock(
             json=lambda: {"offer": "50% discount"},
             raise_for_status=lambda: None,
             status_code=200,
         )
 
-        my_offer = offer_request(target_offer)
+    with patch("myapp.perk_app.c", mock_client):
+        my_offer = await offer_request(target_offer)
 
     assert my_offer == {"offer": "50% discount"}

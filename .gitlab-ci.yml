@@ -19,9 +19,9 @@ E2E:
     - PYTHONPATH=$(pwd) fastapi dev src/applications/member_data.py --port 6001 &
     - PYTHONPATH=$(pwd) fastapi dev src/applications/prediction.py --port 6002 &
     - PYTHONPATH=$(pwd) fastapi dev src/applications/offer_engine.py --port 6003 &
-    - PYTHONPATH=$(pwd) fastapi dev perk_app.py --port 6000 &
+    - PYTHONPATH=$(pwd) fastapi dev myapp/perk_app.py --port 6000 &
     - sleep 5
-    - python3 events_streamer.py
+    - python3 myapp/events_streamer.py
     - pkill -f "fastapi dev"
     - sleep 2
     - head -5 transactions.csv

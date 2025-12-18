@@ -6,15 +6,19 @@ import requests
 
 from pathlib import Path
 
+
+#http logs
 logging.basicConfig(
     level = logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
-    filename = 'processed_requests.log',
+    filename = 'logs/requests_sent.log',
     filemode = 'a'
 )
 
-class Eventstreamer:
+#Conceived a mini kafka producer
+class EventStreamer:
     
+    #File presence and size check
     def __init__(self,p:str):
         self.path = p
         file = Path(p)
@@ -24,22 +28,22 @@ class Eventstreamer:
             raise ValueError("File is empty! \n")
 
         
-
+    #Master function that manages sending requests
     def requests_manager(self):
         try:
 
             with open(self.path,"r",encoding="utf-8") as f:
                 stream = csv.DictReader(f)
                 self.send_requests(stream)
-                
-        except FileNotFoundError:
-            logging.error("Error opening file!")
+
         except csv.Error as e:
             logging.error(f"CSV error: {e}")
+            print(f"CSV error: {e} \n")
         except Exception as e:
-            logging.error(f"Unexpected error: {e}")
+            logging.error(f"Error processing file: {e}")
+            print(f"Error processing file: {e} \n")
 
-    
+    #Core function that handles sending requests
     def send_requests(self,s):
         skipped_count = 0
         sent_count = 0
@@ -65,7 +69,7 @@ class Eventstreamer:
                     failed_count += 1
                     logging.error(f"Exception sending row {i}: {e}")
 
-              
+            self.progress_bar(i)  
             i += 1
 
         logging.info("\n\n")
@@ -75,6 +79,7 @@ class Eventstreamer:
         logging.info(f"Unsuccesful sent rows count: {failed_count}")
     
     
+    #Support function to get specific data fields ready for processing
     def transform_row(self,r):
         #Case mismatch in the revenue field (cf. lastTransactionRevenueUSD in member_data.csv and lastTransactionRevenueUsd in member_data.py)
         #Solution: rename field for it to be accepted and inserted 
@@ -83,13 +88,19 @@ class Eventstreamer:
         r["lastTransactionPointsBought"] = float(r["lastTransactionPointsBought"])
         return r
 
+    def progress_bar(self,x):
+        if x%100 == 0:
+            print("*",end="",flush=True)
+
 
 
 print("\nStream started.... \n")
-print("========================\n\n")
+print("=====================================================\n\n")
 
-s = Eventstreamer("member_data.csv")
+s = EventStreamer("data/member_data.csv")
+print("Progress: ",end="")
 s.requests_manager()
 
-print("========================\n")
+print("\n")
+print("=====================================================\n")
 print("Stream ended! \n")
