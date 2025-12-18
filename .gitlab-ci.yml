@@ -24,7 +24,7 @@ E2E:
     - python3 myapp/events_streamer.py
     - pkill -f "fastapi dev"
     - sleep 2
-    - head -5 transactions.csv
+    - head -5 logs/transactions.csv
   artifacts:
     paths:
     - processed_requests.log
