@@ -4,6 +4,8 @@ rm logs/transactions.csv
 rm logs/requests_sent.log
 rm logs/processed_requests.log
 
+python3 -m pytest -s
+
 PYTHONPATH=$(pwd) fastapi dev src/applications/member_data.py --port 6001 > /dev/null 2>&1 &
 PYTHONPATH=$(pwd) fastapi dev src/applications/prediction.py --port 6002 > /dev/null 2>&1 &
 PYTHONPATH=$(pwd) fastapi dev src/applications/offer_engine.py --port 6003 > /dev/null 2>&1 &

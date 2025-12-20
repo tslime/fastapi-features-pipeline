@@ -5,6 +5,7 @@ import logging
 import requests
 import time
 import csv
+import httpx
 
 
 from fastapi import FastAPI
@@ -18,23 +19,17 @@ from src.applications.member_data import MemberData
 from src.applications.prediction import MemberFeatures
 from src.applications.offer_engine import OfferRequest
 
-#Necessary to create a global concurrent client
-from httpx import AsyncClient
-from contextlib import asynccontextmanager
-
-c = None
 
 
-
-
+"""
 #http logs
 logging.basicConfig(
     level = logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
-    filename = 'logs/processed_requests.log',
+    filename = 'processed_requests.log',
     filemode = 'a'
 )
-
+"""
 
 #Log file for relevant metrics initialization 
 logs_file = "logs/transactions.csv"
@@ -50,18 +45,9 @@ if not os.path.exists(logs_file):
 
 
 
-"""Application code starts here"""
+#Application code starts here
 
-#Function to control the life time of the global concurrent client
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    global c
-    c = AsyncClient()
-    yield
-    await c.aclose()
-
-app = FastAPI(lifespan=lifespan)
-
+app = FastAPI()
 
 @app.post("/api/requests/v1")
 async def handle_request(data: Dict[str,Any]):
@@ -80,13 +66,14 @@ async def calculate_offer(m_id:str,data: Dict[str,Any],r_logs):
 
     member_start_time = time.time()
     
-    transactions = await c.get(f"http://localhost:6001/member_data/{m_id}")
-    if transactions.status_code == 404:
-        logging.info(f"Member {m_id} does not have purchase history: {transactions.status_code}")
-        transactions = []
-    else:
-        logging.info(f"Member history fetched successfully: {transactions.status_code}")
-        transactions = transactions.json()
+    async with httpx.AsyncClient() as c:
+        transactions = await c.get(f"http://localhost:6001/member_data/{m_id}")
+        if transactions.status_code == 404:
+            logging.info(f"Member {m_id} does not have purchase history: {transactions.status_code}")
+            transactions = []
+        else:
+            logging.info(f"Member history fetched successfully: {transactions.status_code}")
+            transactions = transactions.json()
         
     member_end_time = time.time()
 
@@ -143,34 +130,36 @@ def calculate_member_features(m_data:List[Dict[str,Any]],r_logs):
 
     return mf
 
-#Support function that retrives ats and resp predictions
+#Support function that retrives he ats and resp predictions
 async def get_ats_resp(memb_features: MemberFeatures,r_logs):
-    try:
-        ats_request = await c.post("http://localhost:6002/ml/ats/predict",json=memb_features.model_dump())
-        ats_request.raise_for_status() 
-        r_logs["ats"] = ats_pred = ats_request.json()["prediction"]
-        logging.info(f"ATS fetched successfuly: {ats_request.status_code} | ")
-    except Exception as e:
-        logging.info(f"ATS fetching failed: {e}")
-        raise 
+    async with httpx.AsyncClient() as c:
+        try:
+            ats_request = await c.post("http://localhost:6002/ml/ats/predict",json=memb_features.model_dump())
+            ats_request.raise_for_status() 
+            r_logs["ats"] = ats_pred = ats_request.json()["prediction"]
+            logging.info(f"ATS fetched successfuly: {ats_request.status_code} | ")
+        except Exception as e:
+            logging.info(f"ATS fetching failed: {e}")
+            raise 
 
-    try:
-        resp_request = await c.post("http://localhost:6002/ml/resp/predict",json=memb_features.model_dump())
-        resp_request.raise_for_status() 
-        r_logs["resp"] = resp_pred = resp_request.json()["prediction"]
-        logging.info(f"RESP fetched successfully: {resp_request.status_code} | ")
-    except Exception as e:
-        logging.info(f"RESP fetching failed: {e}")
-        raise
+        try:
+            resp_request = await c.post("http://localhost:6002/ml/resp/predict",json=memb_features.model_dump())
+            resp_request.raise_for_status() 
+            r_logs["resp"] = resp_pred = resp_request.json()["prediction"]
+            logging.info(f"RESP fetched successfully: {resp_request.status_code} | ")
+        except Exception as e:
+            logging.info(f"RESP fetching failed: {e}")
+            raise
 
     return {"ats": ats_pred, "resp": resp_pred}
 
 #support function that calculates the offer on the basis of the values retrieved by get_ats_resp function
 async def offer_request(offer: OfferRequest):
     try:
-        calc_offer = await c.post("http://localhost:6003/offer/assign",json=offer.model_dump())
-        calc_offer.raise_for_status() 
-        logging.info(f"Offer fetched successfully: {calc_offer.status_code}")
+        async with httpx.AsyncClient() as c:
+            calc_offer = await c.post("http://localhost:6003/offer/assign",json=offer.model_dump())
+            calc_offer.raise_for_status() 
+            logging.info(f"Offer fetched successfully: {calc_offer.status_code}")
     except Exception as e:
         logging.info(f"Error fetching offer: {e}")
         raise
@@ -179,8 +168,9 @@ async def offer_request(offer: OfferRequest):
 
 async def save_member_data(m_id:str,d:Dict[str,Any]):
     try:
-        save_member_transcation = await c.post("http://localhost:6001/member_data",json=d)
-        logging.info(f"Member {m_id} data successfully saved: {save_member_transcation.status_code}")
+        async with httpx.AsyncClient() as c:
+            save_member_transcation = await c.post("http://localhost:6001/member_data",json=d)
+            logging.info(f"Member {m_id} data successfully saved: {save_member_transcation.status_code}")
     except Exception as e:
         logging.info(f"Error while attempting to save member {m_id} data: {e}")
         #raise #No raising here or else we dont record all the features of the member. Though we have it logged at least 
@@ -191,6 +181,5 @@ def record_logs(logs: Dict):
     with open(logs_file,"a",newline="") as f:
         w = csv.DictWriter(f,fieldnames=csv_columns)
         w.writerow(logs)
-
 
 
