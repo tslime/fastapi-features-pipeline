@@ -69,6 +69,7 @@ At the end of the simulation, the app generates the following logs in the `logs/
 
 # Project structure
 
+```
 Plusgrade/
 ├── myapp/
 │   ├── perk_app.py
@@ -92,6 +93,7 @@ Plusgrade/
 │   └── transactions.csv
 ├── simulator.sh
 └── .gitlab-ci.yml
+```
 
 # CI/CD
 
