@@ -110,11 +110,11 @@ async def calculate_offer(m_id:str,data: Dict[str,Any],r_logs):
     r_logs["offer"] = special_offer['offer']
 
     #Latency calculations
-    r_logs["fetch_member_data_latency"] = member_end_time - member_start_time
-    r_logs["calculate_features_latency"] = features_end_time - features_start_time
-    r_logs["get_predictions_latency"] = prediction_end_time - prediction_start_time
-    r_logs["assign_offer_latency"] = offer_end_time - offer_start_time
-    r_logs["total_latency"] = r_logs["fetch_member_data_latency"] + r_logs["calculate_features_latency"] + r_logs["get_predictions_latency"] + r_logs["assign_offer_latency"]
+    r_logs["fetch_member_data_latency"] = round(member_end_time - member_start_time,3)
+    r_logs["calculate_features_latency"] = round(features_end_time - features_start_time,3)
+    r_logs["get_predictions_latency"] = round(prediction_end_time - prediction_start_time,3)
+    r_logs["assign_offer_latency"] = round(offer_end_time - offer_start_time,3)
+    r_logs["total_latency"] = round(r_logs["fetch_member_data_latency"] + r_logs["calculate_features_latency"] + r_logs["get_predictions_latency"] + r_logs["assign_offer_latency"],3)
     
     return {"memberId":m_id,"offer":special_offer["offer"]}
 
