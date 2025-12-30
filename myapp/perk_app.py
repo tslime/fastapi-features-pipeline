@@ -3,14 +3,15 @@ import sys
 import json
 import logging
 import requests
-import time
 import csv
+import time
 
 
 from fastapi import FastAPI
 from typing import Dict, Any, List
 from datetime import datetime, timezone
 from pathlib import Path
+#from time import perf_counter
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -78,7 +79,7 @@ async def handle_request(data: Dict[str,Any]):
 #Core algorithm, namely the orchestrator, that calculates an offer
 async def calculate_offer(m_id:str,data: Dict[str,Any],r_logs):
 
-    member_start_time = time.time()
+    member_start_time = time.perf_counter()
     
     transactions = await c.get(f"http://localhost:6001/member_data/{m_id}")
     if transactions.status_code == 404:
@@ -88,23 +89,23 @@ async def calculate_offer(m_id:str,data: Dict[str,Any],r_logs):
         logging.info(f"Member history fetched successfully: {transactions.status_code}")
         transactions = transactions.json()
         
-    member_end_time = time.time()
+    member_end_time = time.perf_counter()
 
 
-    features_start_time = time.time()
+    features_start_time = time.perf_counter()
     transactions.append(data)
     mem_features = calculate_member_features(transactions,r_logs)
-    features_end_time = time.time()
+    features_end_time = time.perf_counter()
    
-    prediction_start_time = time.time()
+    prediction_start_time = time.perf_counter()
     ats_resp = await get_ats_resp(mem_features,r_logs)
-    prediction_end_time = time.time()
+    prediction_end_time = time.perf_counter()
 
-    offer_start_time = time.time()
+    offer_start_time = time.perf_counter()
     offer_object = OfferRequest(ats_prediction = ats_resp["ats"],
                     resp_prediction = ats_resp["resp"])
     special_offer = await offer_request(offer_object)
-    offer_end_time = time.time()
+    offer_end_time = time.perf_counter()
 
     r_logs["offer"] = special_offer['offer']
 
