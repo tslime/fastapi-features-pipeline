@@ -26,7 +26,9 @@ from contextlib import asynccontextmanager
 c = None
 
 
-
+MEMBER_DATA_URL = os.getenv("MEMBER_DATA_URL", "http://localhost:6001")
+ML_SERVICE_URL = os.getenv("ML_SERVICE_URL", "http://localhost:6002")
+OFFER_SERVICE_URL = os.getenv("OFFER_SERVICE_URL", "http://localhost:6003")
 
 #http logs
 logging.basicConfig(
@@ -81,7 +83,7 @@ async def calculate_offer(m_id:str,data: Dict[str,Any],r_logs):
 
     member_start_time = time.perf_counter()
     
-    transactions = await c.get(f"http://localhost:6001/member_data/{m_id}")
+    transactions = await c.get(f"{MEMBER_DATA_URL}/member_data/{m_id}")
     if transactions.status_code == 404:
         logging.info(f"Member {m_id} does not have purchase history: {transactions.status_code}")
         transactions = []
@@ -147,7 +149,7 @@ def calculate_member_features(m_data:List[Dict[str,Any]],r_logs):
 #Support function that retrives ats and resp predictions
 async def get_ats_resp(memb_features: MemberFeatures,r_logs):
     try:
-        ats_request = await c.post("http://localhost:6002/ml/ats/predict",json=memb_features.model_dump())
+        ats_request = await c.post(f"{ML_SERVICE_URL}/ml/ats/predict",json=memb_features.model_dump())
         ats_request.raise_for_status() 
         r_logs["ats"] = ats_pred = ats_request.json()["prediction"]
         logging.info(f"ATS fetched successfuly: {ats_request.status_code} | ")
@@ -156,7 +158,7 @@ async def get_ats_resp(memb_features: MemberFeatures,r_logs):
         raise 
 
     try:
-        resp_request = await c.post("http://localhost:6002/ml/resp/predict",json=memb_features.model_dump())
+        resp_request = await c.post(f"{ML_SERVICE_URL}/ml/resp/predict",json=memb_features.model_dump())
         resp_request.raise_for_status() 
         r_logs["resp"] = resp_pred = resp_request.json()["prediction"]
         logging.info(f"RESP fetched successfully: {resp_request.status_code} | ")
@@ -169,7 +171,7 @@ async def get_ats_resp(memb_features: MemberFeatures,r_logs):
 #support function that calculates the offer on the basis of the values retrieved by get_ats_resp function
 async def offer_request(offer: OfferRequest):
     try:
-        calc_offer = await c.post("http://localhost:6003/offer/assign",json=offer.model_dump())
+        calc_offer = await c.post(f"{OFFER_SERVICE_URL}/offer/assign",json=offer.model_dump())
         calc_offer.raise_for_status() 
         logging.info(f"Offer fetched successfully: {calc_offer.status_code}")
     except Exception as e:
@@ -180,7 +182,7 @@ async def offer_request(offer: OfferRequest):
 
 async def save_member_data(m_id:str,d:Dict[str,Any]):
     try:
-        save_member_transcation = await c.post("http://localhost:6001/member_data",json=d)
+        save_member_transcation = await c.post(f"{MEMBER_DATA_URL}/member_data",json=d)
         logging.info(f"Member {m_id} data successfully saved: {save_member_transcation.status_code}")
     except Exception as e:
         logging.info(f"Error while attempting to save member {m_id} data: {e}")

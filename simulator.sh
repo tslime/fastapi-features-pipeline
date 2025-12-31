@@ -4,6 +4,10 @@ rm logs/transactions.csv
 rm logs/requests_sent.log
 rm logs/processed_requests.log
 
+export MEMBER_DATA_URL="http://localhost:6001"
+export ML_SERVICE_URL="http://localhost:6002"
+export OFFER_SERVICE_URL="http://localhost:6003"
+
 python3 -m pytest -s
 
 PYTHONPATH=$(pwd) fastapi dev src/applications/member_data.py --port 6001 > /dev/null 2>&1 &
