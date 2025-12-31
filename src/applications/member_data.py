@@ -1,15 +1,9 @@
 from pydantic import BaseModel
 from fastapi import HTTPException
 from src.applications.base_application import BaseApplication
+from src.models.member_data import MemberData
 from typing import Dict, List
 
-
-class MemberData(BaseModel):
-    memberId: str
-    lastTransactionUtcTs: str
-    lastTransactionType: str
-    lastTransactionPointsBought: float
-    lastTransactionRevenueUsd: float
 
 
 member_data_store: Dict[str, List[MemberData]] = {}

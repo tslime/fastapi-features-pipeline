@@ -11,7 +11,6 @@ from fastapi import FastAPI
 from typing import Dict, Any, List
 from datetime import datetime, timezone
 from pathlib import Path
-#from time import perf_counter
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 

@@ -1,10 +1,6 @@
 from pydantic import BaseModel
 from src.applications.base_application import BaseApplication
-
-
-class OfferRequest(BaseModel):
-    ats_prediction: float
-    resp_prediction: float
+from src.models.offer_request import OfferRequest
 
 
 def get_offer(prediction: OfferRequest) -> dict:

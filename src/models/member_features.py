@@ -1,0 +1,12 @@
+from pydantic import BaseModel
+
+
+class MemberFeatures(BaseModel):
+    AVG_POINTS_BOUGHT: float
+    AVG_REVENUE_USD: float
+    LAST_3_TRANSACTIONS_AVG_POINTS_BOUGHT: float
+    LAST_3_TRANSACTIONS_AVG_REVENUE_USD: float
+    PCT_BUY_TRANSACTIONS: float
+    PCT_GIFT_TRANSACTIONS: float
+    PCT_REDEEM_TRANSACTIONS: float
+    DAYS_SINCE_LAST_TRANSACTION: int
