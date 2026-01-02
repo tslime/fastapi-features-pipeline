@@ -24,7 +24,7 @@ async def test_caluclate_offer():
     mock_client = AsyncMock()
     mock_client.get.return_value.status_code = 404
 
-    with patch("myapp.perk_app.c", mock_client), \
+    with patch("myapp.perk_app.incoming_client_request", mock_client), \
          patch("myapp.perk_app.calculate_member_features") as fake_features, \
          patch("myapp.perk_app.get_ats_resp", new_callable=AsyncMock) as fake_ats_resp, \
          patch("myapp.perk_app.offer_request", new_callable=AsyncMock) as fake_offer:

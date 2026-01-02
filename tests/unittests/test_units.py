@@ -123,7 +123,7 @@ async def test_ats_resp_fetching():
                     status_code=200
                 )]
         
-    with patch("myapp.perk_app.c", mock_client):
+    with patch("myapp.perk_app.incoming_client_request", mock_client):
         ats_resp_results = await get_ats_resp(memb_features,logs)
 
     assert ats_resp_results["ats"] == 5
@@ -143,7 +143,7 @@ async def test_offer_request():
             status_code=200,
         )
 
-    with patch("myapp.perk_app.c", mock_client):
+    with patch("myapp.perk_app.incoming_client_request", mock_client):
         my_offer = await offer_request(target_offer)
 
     assert my_offer == {"offer": "50% discount"}
